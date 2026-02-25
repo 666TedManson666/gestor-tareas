@@ -1,0 +1,78 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Gestor de Tareas – Docker Compose (desarrollo)
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ─── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       gestor_tareas
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:     ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout:  5s
+      retries:  10
+
+  # ─── Backend Laravel ────────────────────────────────────────────────────────
+  backend:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV:      local
+      APP_DEBUG:    "true"
+      DB_CONNECTION: pgsql
+      DB_HOST:      postgres
+      DB_PORT:      5432
+      DB_DATABASE:  gestor_tareas
+      DB_USERNAME:  postgres
+      DB_PASSWORD:  secret
+      CORS_ALLOWED_ORIGINS: "http://localhost:5173,http://localhost"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ─── Frontend Vue (desarrollo) ──────────────────────────────────────────────
+  frontend-dev:
+    build:
+      context:    ./frontend
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000/api
+    depends_on:
+      - backend
+    profiles:
+      - dev
+
+  # ─── Frontend Vue (producción / nginx) ──────────────────────────────────────
+  frontend:
+    build:
+      context:    ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000/api
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    profiles:
+      - prod
+
+volumes:
+  postgres_data:

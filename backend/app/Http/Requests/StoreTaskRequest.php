@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreTaskRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'title'       => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'status'      => 'sometimes|in:pending,inProgress,done',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'title.required' => 'El título es obligatorio.',
+            'title.max'      => 'El título no puede superar los 255 caracteres.',
+            'status.in'      => 'El estado debe ser pending, inProgress o done.',
+        ];
+    }
+}
