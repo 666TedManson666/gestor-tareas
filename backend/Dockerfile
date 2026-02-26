@@ -92,8 +92,8 @@ done
 echo "==> PostgreSQL disponible. Ejecutando migraciones..."
 php artisan migrate --force
 
-echo "==> Iniciando servidor Laravel en 0.0.0.0:8000..."
-exec php artisan serve --host=0.0.0.0 --port=8000
+echo "==> Iniciando servidor Laravel en 0.0.0.0:${PORT:-8000}..."
+exec php artisan serve --host=0.0.0.0 --port="${PORT:-8000}"
 ENTRYPOINT
 RUN chmod +x /entrypoint.sh
 
