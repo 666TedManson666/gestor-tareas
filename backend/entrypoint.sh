@@ -1,4 +1,5 @@
 #!/bin/bash
+# v2 - production entrypoint
 set -e
 
 echo "==> Esperando que PostgreSQL acepte conexiones..."
