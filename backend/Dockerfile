@@ -42,8 +42,34 @@ COPY --from=builder /app .
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Copiar archivo de entorno y entrypoint
-COPY .env.example .env
+# Generar .env inline (evita COPY del contexto de build)
+RUN cat <<'ENVFILE' > .env
+APP_NAME="Gestor de Tareas"
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+LOG_CHANNEL=stack
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+DB_CONNECTION=pgsql
+DB_HOST=postgres
+DB_PORT=5432
+DB_DATABASE=gestor_tareas
+DB_USERNAME=postgres
+DB_PASSWORD=secret
+
+BROADCAST_DRIVER=log
+CACHE_DRIVER=file
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=sync
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+
+CORS_ALLOWED_ORIGINS=http://localhost:5173
+ENVFILE
 # Crear entrypoint inline (evita depender del contexto de build)
 RUN cat <<'ENTRYPOINT' > /entrypoint.sh
 #!/bin/bash
