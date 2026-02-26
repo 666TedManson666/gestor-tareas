@@ -75,6 +75,13 @@ RUN cat <<'ENTRYPOINT' > /entrypoint.sh
 #!/bin/bash
 set -e
 
+echo "==> Inyectando variables de Railway en .env..."
+[ -n "$DB_HOST" ]     && sed -i "s|DB_HOST=.*|DB_HOST=${DB_HOST}|"         .env
+[ -n "$DB_PORT" ]     && sed -i "s|DB_PORT=.*|DB_PORT=${DB_PORT}|"         .env
+[ -n "$DB_DATABASE" ] && sed -i "s|DB_DATABASE=.*|DB_DATABASE=${DB_DATABASE}|" .env
+[ -n "$DB_USERNAME" ] && sed -i "s|DB_USERNAME=.*|DB_USERNAME=${DB_USERNAME}|" .env
+[ -n "$DB_PASSWORD" ] && sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD}|" .env
+
 echo "==> Esperando que PostgreSQL acepte conexiones..."
 until php -r "
     \$conn = @fsockopen(
