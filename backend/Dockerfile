@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # ─── Stage 1: Build (PHP 8.2 + Composer) ────────────────────────────────────
 # IMPORTANTE: builder y runtime deben usar la misma versión de PHP para que
 # el platform_check.php generado por Composer sea compatible.
@@ -43,9 +44,32 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
 
 # Copiar archivo de entorno y entrypoint
 COPY .env.example .env
-COPY entrypoint.sh /entrypoint.sh
-# Eliminar saltos de línea Windows (CRLF → LF) y dar permisos de ejecución
-RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
+# Crear entrypoint inline (evita depender del contexto de build)
+RUN cat <<'ENTRYPOINT' > /entrypoint.sh
+#!/bin/bash
+set -e
+
+echo "==> Esperando que PostgreSQL acepte conexiones..."
+until php -r "
+    \$conn = @fsockopen(
+        getenv('DB_HOST') ?: 'postgres',
+        getenv('DB_PORT') ?: 5432,
+        \$errno, \$errstr, 3
+    );
+    if (\$conn) { fclose(\$conn); exit(0); }
+    exit(1);
+" 2>/dev/null; do
+    echo "    PostgreSQL no disponible, reintentando en 2s..."
+    sleep 2
+done
+
+echo "==> PostgreSQL disponible. Ejecutando migraciones..."
+php artisan migrate --force
+
+echo "==> Iniciando servidor Laravel en 0.0.0.0:8000..."
+exec php artisan serve --host=0.0.0.0 --port=8000
+ENTRYPOINT
+RUN chmod +x /entrypoint.sh
 
 # Generar APP_KEY
 RUN php artisan key:generate --force
