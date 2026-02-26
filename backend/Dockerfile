@@ -18,10 +18,10 @@ WORKDIR /app
 RUN composer create-project laravel/laravel:^10.0 . --no-interaction --prefer-dist
 
 # Copiar archivos personalizados (sobreescriben los de Laravel)
-COPY app/            app/
-COPY database/       database/
-COPY config/cors.php config/cors.php
-COPY routes/api.php  routes/api.php
+COPY backend/app/            app/
+COPY backend/database/       database/
+COPY backend/config/cors.php config/cors.php
+COPY backend/routes/api.php  routes/api.php
 
 # ─── Stage 2: Runtime ────────────────────────────────────────────────────────
 FROM php:8.2-cli
